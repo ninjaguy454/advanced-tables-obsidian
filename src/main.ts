@@ -241,16 +241,21 @@ export default class TableEditorPlugin extends Plugin {
       id: 'evaluate-formulas',
       name: 'Evaluate table formulas',
       icon: 'formula',
-      editorCheckCallback: (
-        checking: boolean,
-        editor: Editor,
-        view: MarkdownView,
-      ): boolean | void => {
-        const te = new TableEditor(this.app, view.file, editor, this.settings);
-        if (checking) {
-          return te.cursorIsInTable() || te.cursorIsInTableFormula();
+      callback: () => {
+        // Attempt to get the active Markdown view and its editor
+        const activeView = this.app.workspace.getActiveViewOfType(MarkdownView);
+        if (!activeView || !activeView.editor) {
+          new Notice("No active editor available.");
+          return;
         }
-        te.evaluateFormulas();
+        // Create the TableEditor instance with the active view's file and editor
+        const te = new TableEditor(this.app, activeView.file, activeView.editor, this.settings);
+        // Optionally check if the cursor is in a valid table/formula cell and provide feedback
+        if (te.cursorIsInTable() || te.cursorIsInTableFormula()) {
+          te.evaluateFormulas();
+        } else {
+          new Notice("Cursor is not in a table or formula cell.");
+        }
       },
     });
 
